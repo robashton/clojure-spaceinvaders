@@ -1,1 +1,1 @@
-cljsc game.cljs '{:optimizations :advanced}' > game.js
+cljsc game.clj '{:optimizations :advanced}' > game.js
