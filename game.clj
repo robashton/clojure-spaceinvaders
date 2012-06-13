@@ -1,13 +1,22 @@
 (ns game)
 
-
-(defn drawSquare []
+(defn drawRect [x y w h]
   (let [target (.getElementById js/document "target")
         context (.getContext target "2d")]
-    (.fillRect context 0 0 100 100)    
+    (.fillRect context x y w h)    
   )
 )
 
+(defn tick [x]
+  (drawRect x 0 100 100)
+  (if (<= x 1000) 
+    (js/setTimeout (fn []
+      (tick (inc x)) 
+    ) 33  )
+  )
+)
+
+
 (defn ^:export init []
-  (drawSquare)
+  (tick 0) 
 )

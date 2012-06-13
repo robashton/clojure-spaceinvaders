@@ -1,0 +1,1 @@
+cljsc game.clj '{:optimizations :none}' > game.js
