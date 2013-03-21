@@ -16,25 +16,27 @@
 )
 
 (defn drawSquare [[ctx width height] x y w h]
-  (set! (. ctx -fillStyle) "#000")
+  (set! (. ctx -fillStyle) "#FF0")
   (.fillRect ctx x y w h) 
 )
 
+(defn initState []
+ (for [x (range 0 100 10)
+       y (range 0 100 10)]
+   [x y]
+ )
+)
 
-(defn tick [x]
+(defn tick [enemies]
   (let [ctx (context)] 
     (clearScreen ctx) 
-    (drawSquare ctx x 0 100 100)  
-    (if (<= x 1000) 
-      (js/setTimeout (fn []
-        (tick (inc x)) 
-      ) 33  )
-    )
+    (doseq [[x y] enemies] (drawSquare ctx x y 5 5))
+    (js/setTimeout (fn []
+      (tick enemies) 
+    ) 33  )
   )
 )
 
-
-
 (defn ^:export init []
-  (tick 0) 
+  (tick (initState)) 
 )
