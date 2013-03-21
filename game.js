@@ -13331,9 +13331,9 @@ cljs.core.comparator = function(a) {
     return cljs.core.truth_(a.call(null, b, c)) ? -1 : cljs.core.truth_(a.call(null, c, b)) ? 1 : 0
   }
 };
-var game = {context:function() {
-  var a = document.getElementById("target");
-  return cljs.core.PersistentVector.fromArray([a.getContext("2d"), a.width, a.height], !0)
+var game = {context:function(a, b) {
+  var c = document.getElementById("target");
+  return cljs.core.PersistentVector.fromArray([c.getContext("2d"), c.width = a, c.height = b], !0)
 }, clearScreen:function(a) {
   var b = cljs.core.nth.call(null, a, 0, null), c = cljs.core.nth.call(null, a, 1, null);
   a = cljs.core.nth.call(null, a, 2, null);
@@ -13346,49 +13346,83 @@ var game = {context:function() {
   f.fillStyle = "#FF0";
   return f.fillRect(b, c, d, e)
 }, initState:function() {
-  return function b(c) {
-    return new cljs.core.LazySeq(null, !1, function() {
-      for(var d = c;;) {
-        var e = cljs.core.seq.call(null, d);
-        if(e) {
-          var f = e, g = cljs.core.first.call(null, f), e = function(b, c, d, e) {
-            return function p(f) {
-              return new cljs.core.LazySeq(null, !1, function(b, c, d, e) {
-                return function() {
-                  for(;;) {
-                    var b = cljs.core.seq.call(null, f);
-                    return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([c, b], !0), p.call(null, cljs.core.rest.call(null, f)))) : null
+  return cljs.core.PersistentVector.fromArray([1, function() {
+    return function b(c) {
+      return new cljs.core.LazySeq(null, !1, function() {
+        for(var d = c;;) {
+          var e = cljs.core.seq.call(null, d);
+          if(e) {
+            var f = e, g = cljs.core.first.call(null, f), e = function(b, c, d, e) {
+              return function p(f) {
+                return new cljs.core.LazySeq(null, !1, function(b, c, d, e) {
+                  return function() {
+                    for(;;) {
+                      var b = cljs.core.seq.call(null, f);
+                      return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.PersistentVector.fromArray([30 * c, 30 * b, 20, 20], !0), p.call(null, cljs.core.rest.call(null, f)))) : null
+                    }
                   }
-                }
-              }(b, c, d, e), null)
+                }(b, c, d, e), null)
+              }
+            }(d, g, f, e);
+            if(e = cljs.core.seq.call(null, e.call(null, cljs.core.range.call(null, 0, 8, 2)))) {
+              return cljs.core.concat.call(null, e, b.call(null, cljs.core.rest.call(null, d)))
             }
-          }(d, g, f, e);
-          if(e = cljs.core.seq.call(null, e.call(null, cljs.core.range.call(null, 0, 100, 10)))) {
-            return cljs.core.concat.call(null, e, b.call(null, cljs.core.rest.call(null, d)))
+            d = cljs.core.rest.call(null, d)
+          }else {
+            return null
           }
-          d = cljs.core.rest.call(null, d)
-        }else {
+        }
+      }, null)
+    }.call(null, cljs.core.range.call(null, 0, 16, 2))
+  }()], !0)
+}, getNextDirection:function(a, b) {
+  return cljs.core._EQ_.call(null, a, 1) ? 600 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, function(a, b) {
+    var e = cljs.core.nth.call(null, a, 0, null);
+    cljs.core.nth.call(null, a, 1, null);
+    cljs.core.nth.call(null, a, 2, null);
+    cljs.core.nth.call(null, a, 3, null);
+    return e
+  }, b)) ? -1 : 1 : 0 > cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, function(a, b) {
+    var e = cljs.core.nth.call(null, a, 0, null);
+    cljs.core.nth.call(null, a, 1, null);
+    cljs.core.nth.call(null, a, 2, null);
+    cljs.core.nth.call(null, a, 3, null);
+    return e
+  }, b)) ? 1 : -1
+}, doLogic:function(a) {
+  var b = cljs.core.nth.call(null, a, 0, null), c = cljs.core.nth.call(null, a, 1, null);
+  return cljs.core.PersistentVector.fromArray([game.getNextDirection.call(null, b, c), function() {
+    return function e(a) {
+      return new cljs.core.LazySeq(null, !1, function() {
+        for(;;) {
+          var c = cljs.core.seq.call(null, a);
+          if(c) {
+            var h = cljs.core.first.call(null, c), c = cljs.core.nth.call(null, h, 0, null), k = cljs.core.nth.call(null, h, 1, null), l = cljs.core.nth.call(null, h, 2, null), h = cljs.core.nth.call(null, h, 3, null);
+            return cljs.core.cons.call(null, cljs.core._EQ_.call(null, b, 1) ? cljs.core.PersistentVector.fromArray([c + 1, k, l, h], !0) : cljs.core.PersistentVector.fromArray([c - 1, k, l, h], !0), e.call(null, cljs.core.rest.call(null, a)))
+          }
           return null
         }
-      }
-    }, null)
-  }.call(null, cljs.core.range.call(null, 0, 100, 10))
-}, tick:function tick(b) {
-  var c = game.context.call(null);
-  game.clearScreen.call(null, c);
-  for(var d = cljs.core.seq.call(null, b);;) {
+      }, null)
+    }.call(null, c)
+  }()], !0)
+}, tick:function tick(b, c) {
+  cljs.core.nth.call(null, c, 0, null);
+  var d = cljs.core.nth.call(null, c, 1, null);
+  game.clearScreen.call(null, b);
+  for(d = cljs.core.seq.call(null, d);;) {
     if(d) {
-      var e = cljs.core.first.call(null, d), f = cljs.core.nth.call(null, e, 0, null), e = cljs.core.nth.call(null, e, 1, null);
-      game.drawSquare.call(null, c, f, e, 5, 5);
+      var e = cljs.core.first.call(null, d), f = cljs.core.nth.call(null, e, 0, null), g = cljs.core.nth.call(null, e, 1, null), h = cljs.core.nth.call(null, e, 2, null), e = cljs.core.nth.call(null, e, 3, null);
+      game.drawSquare.call(null, b, f, g, h, e);
       d = cljs.core.next.call(null, d)
     }else {
       break
     }
   }
   return setTimeout(function() {
-    return tick.call(null, b)
+    return tick.call(null, b, game.doLogic.call(null, c))
   }, 33)
 }, init:function() {
-  return game.tick.call(null, game.initState.call(null))
+  var a = game.context.call(null, 640, 480);
+  return game.tick.call(null, a, game.initState.call(null))
 }};
 goog.exportSymbol("game.init", game.init);
