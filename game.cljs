@@ -29,6 +29,15 @@
  }
 )
 
+(defn initPlayer [x y w h]
+ {
+  :x x
+  :y y
+  :w w
+  :h h
+ }
+)
+
 (defn initState []
  { 
    :direction 1
@@ -36,6 +45,7 @@
                   y (range 0 8 2)]
               (initEnemy x y 20 20)
    )
+   :player (initPlayer 200 430 20 20)
  } 
 )
 
@@ -67,25 +77,44 @@
   )
 )
 
-(defn doLogic [state]
-  {
-    :direction (directionLogic state)
-    :enemies (enemiesLogic state)
-  }
-)
 
-(defn tick [ctx state]
+(defn enemiesRender [ctx state]
   (let [enemies (:enemies state)]
-    (clearScreen ctx) 
     (doseq [enemy enemies] 
       (let [{:keys [x y w h]} enemy]
         (drawSquare ctx x y w h)
       )
     )
-    (js/setTimeout (fn []
-      (tick ctx (doLogic state))
-    ) 33  )
   )
+)
+
+(defn playerRender [ctx state]
+  (let [player (:player state)]
+    (let [{:keys [x y w h]} player]
+      (drawSquare ctx x y w h)
+    )
+  )
+)
+
+(defn doLogic [state]
+  {
+    :direction (directionLogic state)
+    :enemies (enemiesLogic state)
+    :player (:player state)
+  }
+)
+
+(defn renderScene [ctx state]
+  (enemiesRender ctx state)
+  (playerRender ctx state)
+)
+
+(defn tick [ctx state]
+  (clearScreen ctx) 
+  (renderScene ctx state)
+  (js/setTimeout (fn []
+    (tick ctx (doLogic state))
+  ) 33  )
 )
 
 (defn ^:export init []

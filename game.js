@@ -13347,6 +13347,8 @@ var game = {context:function(a, b) {
   return f.fillRect(b, c, d, e)
 }, initEnemy:function(a, b, c, d) {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", 30 * a, "\ufdd0:y", 30 * b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
+}, initPlayer:function(a, b, c, d) {
+  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", a, "\ufdd0:y", b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
 }, initState:function() {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", 1, "\ufdd0:enemies", function() {
     return function b(c) {
@@ -13376,7 +13378,7 @@ var game = {context:function(a, b) {
         }
       }, null)
     }.call(null, cljs.core.range.call(null, 0, 16, 2))
-  }()], !0)
+  }(), "\ufdd0:player", game.initPlayer.call(null, 200, 430, 20, 20)], !0)
 }, directionLogic:function(a) {
   var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a;
   a = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null);
@@ -13394,20 +13396,27 @@ var game = {context:function(a, b) {
       }
     }, null)
   }.call(null, a)
-}, doLogic:function(a) {
-  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", game.directionLogic.call(null, a), "\ufdd0:enemies", game.enemiesLogic.call(null, a)], !0)
-}, tick:function tick(b, c) {
-  var d = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, c);
-  game.clearScreen.call(null, b);
-  for(d = cljs.core.seq.call(null, d);;) {
-    if(d) {
-      var e = cljs.core.first.call(null, d), f = cljs.core.seq_QMARK_.call(null, e) ? cljs.core.apply.call(null, cljs.core.hash_map, e) : e, e = cljs.core._lookup.call(null, f, "\ufdd0:h", null), g = cljs.core._lookup.call(null, f, "\ufdd0:w", null), h = cljs.core._lookup.call(null, f, "\ufdd0:y", null), f = cljs.core._lookup.call(null, f, "\ufdd0:x", null);
-      game.drawSquare.call(null, b, f, h, g, e);
-      d = cljs.core.next.call(null, d)
+}, enemiesRender:function(a, b) {
+  for(var c = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, b), c = cljs.core.seq.call(null, c);;) {
+    if(c) {
+      var d = cljs.core.first.call(null, c), e = cljs.core.seq_QMARK_.call(null, d) ? cljs.core.apply.call(null, cljs.core.hash_map, d) : d, d = cljs.core._lookup.call(null, e, "\ufdd0:h", null), f = cljs.core._lookup.call(null, e, "\ufdd0:w", null), g = cljs.core._lookup.call(null, e, "\ufdd0:y", null), e = cljs.core._lookup.call(null, e, "\ufdd0:x", null);
+      game.drawSquare.call(null, a, e, g, f, d);
+      c = cljs.core.next.call(null, c)
     }else {
-      break
+      return null
     }
   }
+}, playerRender:function(a, b) {
+  var c = (new cljs.core.Keyword("\ufdd0:player")).call(null, b), d = cljs.core.seq_QMARK_.call(null, c) ? cljs.core.apply.call(null, cljs.core.hash_map, c) : c, c = cljs.core._lookup.call(null, d, "\ufdd0:h", null), e = cljs.core._lookup.call(null, d, "\ufdd0:w", null), f = cljs.core._lookup.call(null, d, "\ufdd0:y", null), d = cljs.core._lookup.call(null, d, "\ufdd0:x", null);
+  return game.drawSquare.call(null, a, d, f, e, c)
+}, doLogic:function(a) {
+  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", game.directionLogic.call(null, a), "\ufdd0:enemies", game.enemiesLogic.call(null, a), "\ufdd0:player", (new cljs.core.Keyword("\ufdd0:player")).call(null, a)], !0)
+}, renderScene:function(a, b) {
+  game.enemiesRender.call(null, a, b);
+  return game.playerRender.call(null, a, b)
+}, tick:function tick(b, c) {
+  game.clearScreen.call(null, b);
+  game.renderScene.call(null, b, c);
   return setTimeout(function() {
     return tick.call(null, b, game.doLogic.call(null, c))
   }, 33)
