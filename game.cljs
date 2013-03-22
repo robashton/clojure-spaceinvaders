@@ -20,43 +20,68 @@
   (.fillRect ctx x y w h) 
 )
 
-(defn initState []
- [
-   1
-   (for [x (range 0 16 2)
-         y (range 0 8 2)]
-     [(* x 30) (* y 30) 20 20]
-   )
- ]
+(defn initEnemy [x y w h]
+ {
+  :x (* x 30)
+  :y (* y 30)
+  :w w
+  :h h
+ }
 )
 
-(defn getNextDirection [current enemies]
-  (if (= current 1)
-    (let [right (apply max (map (fn [[x y w h] e] x) enemies))]
-      (if(> right 600) -1 1)
-    )
-    (let [left (apply min (map (fn [[x y w h] e] x) enemies))]
-      (if(< left 0) 1 -1)
+(defn initState []
+ { 
+   :direction 1
+   :enemies (for [x (range 0 16 2)
+                  y (range 0 8 2)]
+              (initEnemy x y 20 20)
+   )
+ } 
+)
+
+(defn directionLogic [state]
+  (let [{:keys [direction enemies]} state]
+    (if (= direction 1)
+      (let [right (apply max (map :x enemies))]
+        (if(> right 600) -1 1)
+      )
+      (let [left (apply min (map :x enemies))]
+        (if(< left 0) 1 -1)
+      )
     )
   )
 )
 
-(defn doLogic [[direction enemies]]
-  [
-    (getNextDirection direction enemies)
-    (for [[x y w h] enemies]
-      (if(= direction 1)
-        [(inc x) y w h]
-        [(dec x) y w h]
-      )
+(defn enemiesLogic [state]
+  (let [{:keys [direction enemies]} state
+        func (if(= direction 1) inc dec)
+       ]
+    (for [enemy enemies]
+      {
+        :x (func (:x enemy))
+        :y (:y enemy)
+        :w (:w enemy)
+        :h (:h enemy)
+      }
     )
-  ]
+  )
+)
+
+(defn doLogic [state]
+  {
+    :direction (directionLogic state)
+    :enemies (enemiesLogic state)
+  }
 )
 
 (defn tick [ctx state]
-  (let [[dir enemies] state]
+  (let [enemies (:enemies state)]
     (clearScreen ctx) 
-    (doseq [[x y w h] enemies] (drawSquare ctx x y w h))
+    (doseq [enemy enemies] 
+      (let [{:keys [x y w h]} enemy]
+        (drawSquare ctx x y w h)
+      )
+    )
     (js/setTimeout (fn []
       (tick ctx (doLogic state))
     ) 33  )
