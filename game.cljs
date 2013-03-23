@@ -1,5 +1,7 @@
 (ns game)
 
+(def keyStates (atom {}))
+
 (defn context [width height]
   (let [target (.getElementById js/document "target")]
     [
@@ -15,8 +17,8 @@
   (.clearRect ctx 0 0 width height) 
 )
 
-(defn drawSquare [[ctx width height] x y w h]
-  (set! (. ctx -fillStyle) "#FF0")
+(defn drawSquare [[ctx width height] x y w h c]
+  (set! (. ctx -fillStyle) c)
   (.fillRect ctx x y w h) 
 )
 
@@ -77,12 +79,28 @@
   )
 )
 
+(defn applyMod [m k func]
+  (assoc m k (func (m k)))
+)
+
+(defn playerLogic [state]
+  (let [player (:player state)  
+        left (@keyStates 37)
+        right (@keyStates 39)
+       ]
+    (cond (= left true) (applyMod player :x dec)
+          (= right true) (applyMod player :x inc)
+          :else player
+    )
+  )
+)
+
 
 (defn enemiesRender [ctx state]
   (let [enemies (:enemies state)]
     (doseq [enemy enemies] 
       (let [{:keys [x y w h]} enemy]
-        (drawSquare ctx x y w h)
+        (drawSquare ctx x y w h "#FF0")
       )
     )
   )
@@ -91,7 +109,7 @@
 (defn playerRender [ctx state]
   (let [player (:player state)]
     (let [{:keys [x y w h]} player]
-      (drawSquare ctx x y w h)
+      (drawSquare ctx x y w h "#F00")
     )
   )
 )
@@ -100,7 +118,7 @@
   {
     :direction (directionLogic state)
     :enemies (enemiesLogic state)
-    :player (:player state)
+    :player (playerLogic state)
   }
 )
 
@@ -118,7 +136,27 @@
 )
 
 (defn ^:export init []
+  (hookInputEvents)
   (let [ctx (context 640 480)] 
     (tick ctx (initState)) 
   )
+)
+
+(defn hookInputEvents []
+  (.addEventListener js/document "keydown" 
+   (fn [e]
+    (setKeyState (. e -keyCode) true)
+     false
+   )
+  )
+  (.addEventListener js/document "keyup" 
+   (fn [e]
+    (setKeyState (. e -keyCode) false)
+     false
+   )
+  )
+)
+
+(defn setKeyState [code, value]
+  (swap! keyStates assoc code value)
 )

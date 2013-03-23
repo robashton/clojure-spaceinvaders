@@ -13331,25 +13331,32 @@ cljs.core.comparator = function(a) {
     return cljs.core.truth_(a.call(null, b, c)) ? -1 : cljs.core.truth_(a.call(null, c, b)) ? 1 : 0
   }
 };
-var game = {context:function(a, b) {
+var game = {};
+game.keyStates = cljs.core.atom.call(null, cljs.core.ObjMap.EMPTY);
+game.context = function(a, b) {
   var c = document.getElementById("target");
   return cljs.core.PersistentVector.fromArray([c.getContext("2d"), c.width = a, c.height = b], !0)
-}, clearScreen:function(a) {
+};
+game.clearScreen = function(a) {
   var b = cljs.core.nth.call(null, a, 0, null), c = cljs.core.nth.call(null, a, 1, null);
   a = cljs.core.nth.call(null, a, 2, null);
   b.fillStyle = "#FFF";
   return b.clearRect(0, 0, c, a)
-}, drawSquare:function(a, b, c, d, e) {
-  var f = cljs.core.nth.call(null, a, 0, null);
+};
+game.drawSquare = function(a, b, c, d, e, f) {
+  var g = cljs.core.nth.call(null, a, 0, null);
   cljs.core.nth.call(null, a, 1, null);
   cljs.core.nth.call(null, a, 2, null);
-  f.fillStyle = "#FF0";
-  return f.fillRect(b, c, d, e)
-}, initEnemy:function(a, b, c, d) {
+  g.fillStyle = f;
+  return g.fillRect(b, c, d, e)
+};
+game.initEnemy = function(a, b, c, d) {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", 30 * a, "\ufdd0:y", 30 * b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
-}, initPlayer:function(a, b, c, d) {
+};
+game.initPlayer = function(a, b, c, d) {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", a, "\ufdd0:y", b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
-}, initState:function() {
+};
+game.initState = function() {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", 1, "\ufdd0:enemies", function() {
     return function b(c) {
       return new cljs.core.LazySeq(null, !1, function() {
@@ -13379,12 +13386,14 @@ var game = {context:function(a, b) {
       }, null)
     }.call(null, cljs.core.range.call(null, 0, 16, 2))
   }(), "\ufdd0:player", game.initPlayer.call(null, 200, 430, 20, 20)], !0)
-}, directionLogic:function(a) {
+};
+game.directionLogic = function(a) {
   var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a;
   a = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null);
   b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null);
   return cljs.core._EQ_.call(null, b, 1) ? 600 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:x", a)) ? -1 : 1 : 0 > cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, "\ufdd0:x", a)) ? 1 : -1
-}, enemiesLogic:function(a) {
+};
+game.enemiesLogic = function(a) {
   var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a;
   a = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null);
   var b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null), c = cljs.core._EQ_.call(null, b, 1) ? cljs.core.inc : cljs.core.dec;
@@ -13396,32 +13405,60 @@ var game = {context:function(a, b) {
       }
     }, null)
   }.call(null, a)
-}, enemiesRender:function(a, b) {
+};
+game.applyMod = function(a, b, c) {
+  return cljs.core.assoc.call(null, a, b, c.call(null, a.call(null, b)))
+};
+game.playerLogic = function(a) {
+  a = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
+  var b = cljs.core.deref.call(null, game.keyStates).call(null, 37), c = cljs.core.deref.call(null, game.keyStates).call(null, 39);
+  return cljs.core._EQ_.call(null, b, !0) ? game.applyMod.call(null, a, "\ufdd0:x", cljs.core.dec) : cljs.core._EQ_.call(null, c, !0) ? game.applyMod.call(null, a, "\ufdd0:x", cljs.core.inc) : a
+};
+game.enemiesRender = function(a, b) {
   for(var c = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, b), c = cljs.core.seq.call(null, c);;) {
     if(c) {
       var d = cljs.core.first.call(null, c), e = cljs.core.seq_QMARK_.call(null, d) ? cljs.core.apply.call(null, cljs.core.hash_map, d) : d, d = cljs.core._lookup.call(null, e, "\ufdd0:h", null), f = cljs.core._lookup.call(null, e, "\ufdd0:w", null), g = cljs.core._lookup.call(null, e, "\ufdd0:y", null), e = cljs.core._lookup.call(null, e, "\ufdd0:x", null);
-      game.drawSquare.call(null, a, e, g, f, d);
+      game.drawSquare.call(null, a, e, g, f, d, "#FF0");
       c = cljs.core.next.call(null, c)
     }else {
       return null
     }
   }
-}, playerRender:function(a, b) {
+};
+game.playerRender = function(a, b) {
   var c = (new cljs.core.Keyword("\ufdd0:player")).call(null, b), d = cljs.core.seq_QMARK_.call(null, c) ? cljs.core.apply.call(null, cljs.core.hash_map, c) : c, c = cljs.core._lookup.call(null, d, "\ufdd0:h", null), e = cljs.core._lookup.call(null, d, "\ufdd0:w", null), f = cljs.core._lookup.call(null, d, "\ufdd0:y", null), d = cljs.core._lookup.call(null, d, "\ufdd0:x", null);
-  return game.drawSquare.call(null, a, d, f, e, c)
-}, doLogic:function(a) {
-  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", game.directionLogic.call(null, a), "\ufdd0:enemies", game.enemiesLogic.call(null, a), "\ufdd0:player", (new cljs.core.Keyword("\ufdd0:player")).call(null, a)], !0)
-}, renderScene:function(a, b) {
+  return game.drawSquare.call(null, a, d, f, e, c, "#F00")
+};
+game.doLogic = function(a) {
+  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", game.directionLogic.call(null, a), "\ufdd0:enemies", game.enemiesLogic.call(null, a), "\ufdd0:player", game.playerLogic.call(null, a)], !0)
+};
+game.renderScene = function(a, b) {
   game.enemiesRender.call(null, a, b);
   return game.playerRender.call(null, a, b)
-}, tick:function tick(b, c) {
+};
+game.tick = function tick(b, c) {
   game.clearScreen.call(null, b);
   game.renderScene.call(null, b, c);
   return setTimeout(function() {
     return tick.call(null, b, game.doLogic.call(null, c))
   }, 33)
-}, init:function() {
+};
+game.init = function() {
+  game.hookInputEvents.call(null);
   var a = game.context.call(null, 640, 480);
   return game.tick.call(null, a, game.initState.call(null))
-}};
+};
 goog.exportSymbol("game.init", game.init);
+game.hookInputEvents = function() {
+  document.addEventListener("keydown", function(a) {
+    game.setKeyState.call(null, a.keyCode, !0);
+    return!1
+  });
+  return document.addEventListener("keyup", function(a) {
+    game.setKeyState.call(null, a.keyCode, !1);
+    return!1
+  })
+};
+game.setKeyState = function(a, b) {
+  return cljs.core.swap_BANG_.call(null, game.keyStates, cljs.core.assoc, a, b)
+};
