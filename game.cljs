@@ -40,6 +40,15 @@
  }
 )
 
+(defn initBullet [x y w h]
+ {
+  :x x
+  :y y
+  :w w
+  :h h
+ }
+)
+
 (defn initState []
  { 
    :direction 1
@@ -48,6 +57,7 @@
               (initEnemy x y 20 20)
    )
    :player (initPlayer 200 430 20 20)
+   :bullets '()
  } 
 )
 
@@ -79,6 +89,17 @@
   )
 )
 
+(defn bulletsLogic [state]
+  (for [bullet (:bullets state)]
+    {
+      :x (:x bullet)
+      :y (dec (:y bullet))
+      :w (:w bullet)
+      :h (:h bullet)
+    }
+  )
+)
+
 (defn applyMod [m k func]
   (assoc m k (func (m k)))
 )
@@ -106,6 +127,14 @@
   )
 )
 
+(defn bulletsRender [ctx state]
+  (doseq [bullet (:bullets state)] 
+    (let [{:keys [x y w h]} bullet]
+      (drawSquare ctx x y w h "#000")
+    )
+  )
+)
+
 (defn playerRender [ctx state]
   (let [player (:player state)]
     (let [{:keys [x y w h]} player]
@@ -119,6 +148,7 @@
     :direction (directionLogic state)
     :enemies (enemiesLogic state)
     :player (playerLogic state)
+    :bullets (bulletsLogic state)
   }
 )
 
