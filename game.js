@@ -13359,6 +13359,9 @@ game.initPlayer = function(a, b, c, d) {
 game.initBullet = function(a, b, c, d) {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", a, "\ufdd0:y", b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
 };
+game.initBullets = function() {
+  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:lastFiringTicks", 0, "\ufdd0:active", cljs.core.List.EMPTY], !0)
+};
 game.initState = function() {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", 1, "\ufdd0:enemies", function() {
     return function b(c) {
@@ -13388,44 +13391,54 @@ game.initState = function() {
         }
       }, null)
     }.call(null, cljs.core.range.call(null, 0, 16, 2))
-  }(), "\ufdd0:player", game.initPlayer.call(null, 200, 430, 20, 20), "\ufdd0:bullets", cljs.core.List.EMPTY], !0)
+  }(), "\ufdd0:player", game.initPlayer.call(null, 200, 430, 20, 20), "\ufdd0:bullets", game.initBullets.call(null)], !0)
 };
 game.directionLogic = function(a) {
-  var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a;
-  a = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null);
-  b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null);
-  return cljs.core._EQ_.call(null, b, 1) ? 600 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:x", a)) ? -1 : 1 : 0 > cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, "\ufdd0:x", a)) ? 1 : -1
+  var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a, c = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null), b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null);
+  return cljs.core._EQ_.call(null, b, 1) ? 600 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:x", c)) ? cljs.core.assoc.call(null, a, "\ufdd0:direction", -1) : a : 0 > cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, "\ufdd0:x", c)) ? cljs.core.assoc.call(null, a, "\ufdd0:direction", 1) : a
 };
 game.enemiesLogic = function(a) {
-  var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a;
-  a = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null);
-  var b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null), c = cljs.core._EQ_.call(null, b, 1) ? cljs.core.inc : cljs.core.dec;
-  return function e(a) {
-    return new cljs.core.LazySeq(null, !1, function() {
-      for(;;) {
-        var b = cljs.core.seq.call(null, a);
-        return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", c.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b)), "\ufdd0:y", (new cljs.core.Keyword("\ufdd0:y")).call(null, b), "\ufdd0:w", (new cljs.core.Keyword("\ufdd0:w")).call(null, b), "\ufdd0:h", (new cljs.core.Keyword("\ufdd0:h")).call(null, b)], !0), e.call(null, cljs.core.rest.call(null, a)))) : null
-      }
-    }, null)
-  }.call(null, a)
+  var b = (new cljs.core.Keyword("\ufdd0:direction")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a), d = cljs.core._EQ_.call(null, b, 1) ? cljs.core.inc : cljs.core.dec;
+  return cljs.core.assoc.call(null, a, "\ufdd0:enemies", function() {
+    return function f(a) {
+      return new cljs.core.LazySeq(null, !1, function() {
+        for(;;) {
+          var b = cljs.core.seq.call(null, a);
+          return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.assoc.call(null, b, "\ufdd0:x", d.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b))), f.call(null, cljs.core.rest.call(null, a)))) : null
+        }
+      }, null)
+    }.call(null, c)
+  }())
 };
 game.bulletsLogic = function(a) {
-  return function c(a) {
-    return new cljs.core.LazySeq(null, !1, function() {
-      for(;;) {
-        var e = cljs.core.seq.call(null, a);
-        return e ? (e = cljs.core.first.call(null, e), cljs.core.cons.call(null, cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", (new cljs.core.Keyword("\ufdd0:x")).call(null, e), "\ufdd0:y", (new cljs.core.Keyword("\ufdd0:y")).call(null, e) - 1, "\ufdd0:w", (new cljs.core.Keyword("\ufdd0:w")).call(null, e), "\ufdd0:h", (new cljs.core.Keyword("\ufdd0:h")).call(null, e)], !0), c.call(null, cljs.core.rest.call(null, a)))) : null
-      }
-    }, null)
-  }.call(null, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a))
+  return game.tryAndFire.call(null, game.moveBullets.call(null, a))
+};
+game.moveBullets = function(a) {
+  var b = (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:active")).call(null, b);
+  return cljs.core.assoc.call(null, a, "\ufdd0:bullets", cljs.core.assoc.call(null, b, "\ufdd0:active", function() {
+    return function e(a) {
+      return new cljs.core.LazySeq(null, !1, function() {
+        for(;;) {
+          var b = cljs.core.seq.call(null, a);
+          return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.assoc.call(null, b, "\ufdd0:y", (new cljs.core.Keyword("\ufdd0:y")).call(null, b) - 1), e.call(null, cljs.core.rest.call(null, a)))) : null
+        }
+      }, null)
+    }.call(null, c)
+  }()))
+};
+game.fire = function(a) {
+  var b = (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:active")).call(null, b), d = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
+  return cljs.core.assoc.call(null, a, "\ufdd0:bullets", cljs.core.assoc.call(null, b, "\ufdd0:active", cljs.core.cons.call(null, game.initBullet.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, d), (new cljs.core.Keyword("\ufdd0:y")).call(null, d), 5, 5), c)))
+};
+game.tryAndFire = function(a) {
+  return cljs.core.truth_(cljs.core.deref.call(null, game.keyStates).call(null, 32)) ? game.fire.call(null, a) : a
 };
 game.applyMod = function(a, b, c) {
   return cljs.core.assoc.call(null, a, b, c.call(null, a.call(null, b)))
 };
 game.playerLogic = function(a) {
-  a = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
-  var b = cljs.core.deref.call(null, game.keyStates).call(null, 37), c = cljs.core.deref.call(null, game.keyStates).call(null, 39);
-  return cljs.core._EQ_.call(null, b, !0) ? game.applyMod.call(null, a, "\ufdd0:x", cljs.core.dec) : cljs.core._EQ_.call(null, c, !0) ? game.applyMod.call(null, a, "\ufdd0:x", cljs.core.inc) : a
+  var b = (new cljs.core.Keyword("\ufdd0:player")).call(null, a), c = cljs.core.deref.call(null, game.keyStates).call(null, 37), d = cljs.core.deref.call(null, game.keyStates).call(null, 39);
+  return cljs.core.assoc.call(null, a, "\ufdd0:player", cljs.core._EQ_.call(null, c, !0) ? game.applyMod.call(null, b, "\ufdd0:x", cljs.core.dec) : cljs.core._EQ_.call(null, d, !0) ? game.applyMod.call(null, b, "\ufdd0:x", cljs.core.inc) : b)
 };
 game.enemiesRender = function(a, b) {
   for(var c = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, b), c = cljs.core.seq.call(null, c);;) {
@@ -13439,7 +13452,7 @@ game.enemiesRender = function(a, b) {
   }
 };
 game.bulletsRender = function(a, b) {
-  for(var c = cljs.core.seq.call(null, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, b));;) {
+  for(var c = cljs.core.seq.call(null, (new cljs.core.Keyword("\ufdd0:active")).call(null, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, b)));;) {
     if(c) {
       var d = cljs.core.first.call(null, c), e = cljs.core.seq_QMARK_.call(null, d) ? cljs.core.apply.call(null, cljs.core.hash_map, d) : d, d = cljs.core._lookup.call(null, e, "\ufdd0:h", null), f = cljs.core._lookup.call(null, e, "\ufdd0:w", null), g = cljs.core._lookup.call(null, e, "\ufdd0:y", null), e = cljs.core._lookup.call(null, e, "\ufdd0:x", null);
       game.drawSquare.call(null, a, e, g, f, d, "#000");
@@ -13454,11 +13467,12 @@ game.playerRender = function(a, b) {
   return game.drawSquare.call(null, a, d, f, e, c, "#F00")
 };
 game.doLogic = function(a) {
-  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", game.directionLogic.call(null, a), "\ufdd0:enemies", game.enemiesLogic.call(null, a), "\ufdd0:player", game.playerLogic.call(null, a), "\ufdd0:bullets", game.bulletsLogic.call(null, a)], !0)
+  return game.bulletsLogic.call(null, game.playerLogic.call(null, game.enemiesLogic.call(null, game.directionLogic.call(null, a))))
 };
 game.renderScene = function(a, b) {
   game.enemiesRender.call(null, a, b);
-  return game.playerRender.call(null, a, b)
+  game.playerRender.call(null, a, b);
+  return game.bulletsRender.call(null, a, b)
 };
 game.tick = function tick(b, c) {
   game.clearScreen.call(null, b);

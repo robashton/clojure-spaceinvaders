@@ -49,6 +49,13 @@
  }
 )
 
+(defn initBullets []
+  {
+    :lastFiringTicks 0
+    :active ()
+  }
+)
+
 (defn initState []
  { 
    :direction 1
@@ -57,7 +64,7 @@
               (initEnemy x y 20 20)
    )
    :player (initPlayer 200 430 20 20)
-   :bullets '()
+   :bullets (initBullets)
  } 
 )
 
@@ -65,38 +72,66 @@
   (let [{:keys [direction enemies]} state]
     (if (= direction 1)
       (let [right (apply max (map :x enemies))]
-        (if(> right 600) -1 1)
+        (if(> right 600) (assoc state :direction -1) state)
       )
       (let [left (apply min (map :x enemies))]
-        (if(< left 0) 1 -1)
+        (if(< left 0) (assoc state :direction 1) state)
       )
     )
   )
 )
 
 (defn enemiesLogic [state]
-  (let [{:keys [direction enemies]} state
+  (let [direction (:direction state)
+        enemies (:enemies state)
         func (if(= direction 1) inc dec)
        ]
-    (for [enemy enemies]
-      {
-        :x (func (:x enemy))
-        :y (:y enemy)
-        :w (:w enemy)
-        :h (:h enemy)
-      }
+    (assoc state :enemies
+      (for [enemy enemies]
+        (assoc enemy :x (func (:x enemy)))
+      )
     )
   )
 )
 
 (defn bulletsLogic [state]
-  (for [bullet (:bullets state)]
-    {
-      :x (:x bullet)
-      :y (dec (:y bullet))
-      :w (:w bullet)
-      :h (:h bullet)
-    }
+  (tryAndFire
+    (moveBullets state)
+  )
+)
+
+(defn moveBullets [state]
+  (let [bullets (:bullets state)
+        active (:active bullets)]
+    (assoc state :bullets 
+      (assoc bullets :active
+        (for [bullet active]
+          (assoc bullet :y (dec (:y bullet)))
+        )
+      )
+    )
+  )
+)
+
+(defn fire [state]
+  (let [bullets (:bullets state)
+        active (:active bullets)
+        player (:player state)]
+    (assoc state :bullets 
+      (assoc bullets :active
+        (cons 
+          (initBullet (:x player) (:y player) 5 5)
+          active
+        )
+       )
+     )
+  )
+)
+
+(defn tryAndFire [state]
+  (if (@keyStates 32)
+    (fire state)
+    state
   )
 )
 
@@ -109,9 +144,11 @@
         left (@keyStates 37)
         right (@keyStates 39)
        ]
-    (cond (= left true) (applyMod player :x dec)
-          (= right true) (applyMod player :x inc)
-          :else player
+    (assoc state :player 
+      (cond (= left true) (applyMod player :x dec)
+            (= right true) (applyMod player :x inc)
+            :else player
+      )
     )
   )
 )
@@ -128,7 +165,7 @@
 )
 
 (defn bulletsRender [ctx state]
-  (doseq [bullet (:bullets state)] 
+  (doseq [bullet (:active (:bullets state))] 
     (let [{:keys [x y w h]} bullet]
       (drawSquare ctx x y w h "#000")
     )
@@ -144,17 +181,19 @@
 )
 
 (defn doLogic [state]
-  {
-    :direction (directionLogic state)
-    :enemies (enemiesLogic state)
-    :player (playerLogic state)
-    :bullets (bulletsLogic state)
-  }
+  (bulletsLogic
+    (playerLogic
+      (enemiesLogic
+        (directionLogic state)
+      )
+    )
+  )
 )
 
 (defn renderScene [ctx state]
   (enemiesRender ctx state)
   (playerRender ctx state)
+  (bulletsRender ctx state)
 )
 
 (defn tick [ctx state]
