@@ -1,231 +1,154 @@
 (ns game)
 
-(def keyStates (atom {}))
+(def key-states (atom {}))
 
 (defn context [width height]
   (let [target (.getElementById js/document "target")]
     [
       (.getContext target "2d") 
       (set! (. target -width) width)
-      (set! (. target -height) height)
-    ]
-  )
-)
+      (set! (. target -height) height)]))
 
-(defn clearScreen [[ctx width height]]
+(defn clear-screen [[ctx width height]]
   (set! (. ctx -fillStyle) "#FFF")
-  (.clearRect ctx 0 0 width height) 
-)
+  (.clearRect ctx 0 0 width height))
 
-(defn drawSquare [[ctx width height] x y w h c]
+(defn render-rect [[ctx width height] rect c]
   (set! (. ctx -fillStyle) c)
-  (.fillRect ctx x y w h) 
-)
+  (let [{:keys [x y w h]} rect]
+    (.fillRect ctx x y w h)))
 
-(defn initEnemy [x y w h]
- {
-  :x (* x 30)
-  :y (* y 30)
-  :w w
-  :h h
- }
-)
+(defn create-rect [x y w h]
+ { :x x
+   :y y
+   :w w
+   :h h })
 
-(defn initPlayer [x y w h]
- {
-  :x x
-  :y y
-  :w w
-  :h h
- }
-)
+(defn create-bullets []
+  { :lastFiringTicks 0
+    :active () })
 
-(defn initBullet [x y w h]
- {
-  :x x
-  :y y
-  :w w
-  :h h
- }
-)
+(defn create-state []
+ { :direction 1
+   :enemies (for [x (range 0 480 60)
+                  y (range 0 240 60)]
+              (create-rect x y 20 20))
+   :player (create-rect 200 430 20 20)
+   :bullets (create-bullets) } )
 
-(defn initBullets []
-  {
-    :lastFiringTicks 0
-    :active ()
-  }
-)
-
-(defn initState []
- { 
-   :direction 1
-   :enemies (for [x (range 0 16 2)
-                  y (range 0 8 2)]
-              (initEnemy x y 20 20)
-   )
-   :player (initPlayer 200 430 20 20)
-   :bullets (initBullets)
- } 
-)
-
-(defn directionLogic [state]
+(defn update-direction [state]
   (let [{:keys [direction enemies]} state]
     (if (= direction 1)
       (let [right (apply max (map :x enemies))]
-        (if(> right 600) (assoc state :direction -1) state)
-      )
+        (if(> right 600) (assoc state :direction -1) state))
       (let [left (apply min (map :x enemies))]
-        (if(< left 0) (assoc state :direction 1) state)
-      )
-    )
-  )
-)
+        (if(< left 0) (assoc state :direction 1) state)))))
 
-(defn enemiesLogic [state]
+(defn update-enemies [state]
   (let [direction (:direction state)
         enemies (:enemies state)
         func (if(= direction 1) inc dec)
        ]
     (assoc state :enemies
       (for [enemy enemies]
-        (assoc enemy :x (func (:x enemy)))
-      )
-    )
-  )
-)
+        (update-in enemy [:x] func)))))
 
-(defn bulletsLogic [state]
-  (tryAndFire
-    (moveBullets state)
-  )
-)
+(defn update-firing-ticks [state]
+  (let [bullets (:bullets state)
+        ticks (:lastFiringTicks bullets)]
+    (if (= ticks 0) 
+      state
+      (if (= (rem ticks 30) 0)
+        (assoc-in state [:bullets :lastFiringTicks] 0)
+        (update-in state [:bullets :lastFiringTicks] inc)))))
 
-(defn moveBullets [state]
+(defn update-bullets [state]
+  (try-and-fire
+    (update-firing-ticks
+      (move-bullets state)
+    )))
+
+(defn move-bullets [state]
   (let [bullets (:bullets state)
         active (:active bullets)]
-    (assoc state :bullets 
-      (assoc bullets :active
-        (for [bullet active]
-          (assoc bullet :y (dec (:y bullet)))
-        )
-      )
-    )
-  )
+    (assoc-in state [:bullets :active]
+      (for [bullet active]
+        (update-in bullet [:y] dec)))))
+
+(defn increment-firing-ticks [state]
+  (assoc-in state [:bullets :lastFiringTicks] 1)
 )
+
+(defn add-bullet-in-player-location [state]
+  (let [player (:player state)]
+    (assoc-in state [:bullets :active]
+      (cons 
+        (create-rect (:x player) (:y player) 5 5)
+        (get-in state [:bullets :active])))))
 
 (defn fire [state]
-  (let [bullets (:bullets state)
-        active (:active bullets)
-        player (:player state)]
-    (assoc state :bullets 
-      (assoc bullets :active
-        (cons 
-          (initBullet (:x player) (:y player) 5 5)
-          active
-        )
-       )
-     )
-  )
-)
+  (increment-firing-ticks
+    (add-bullet-in-player-location state)))
 
-(defn tryAndFire [state]
-  (if (@keyStates 32)
-    (fire state)
-    state
-  )
-)
+(defn can-fire [state]
+  (= (get-in state [:bullets :lastFiringTicks]) 0))
 
-(defn applyMod [m k func]
-  (assoc m k (func (m k)))
-)
+(defn try-and-fire [state]
+  (if (and (@key-states 32) (can-fire state))
+    (fire state) state))
 
-(defn playerLogic [state]
-  (let [player (:player state)  
-        left (@keyStates 37)
-        right (@keyStates 39)
-       ]
-    (assoc state :player 
-      (cond (= left true) (applyMod player :x dec)
-            (= right true) (applyMod player :x inc)
-            :else player
-      )
-    )
-  )
-)
+(defn update-player [state]
+  (let [left (@key-states 37)
+        right (@key-states 39)]
+    (cond (= left true) (update-in state [:player :x] dec)
+          (= right true) (update-in state [:player :x] inc)
+          :else state)))
 
+(defn render-rects [ctx rects colour]
+  (doseq [rect rects] 
+    (render-rect ctx rect colour)))
 
-(defn enemiesRender [ctx state]
-  (let [enemies (:enemies state)]
-    (doseq [enemy enemies] 
-      (let [{:keys [x y w h]} enemy]
-        (drawSquare ctx x y w h "#FF0")
-      )
-    )
-  )
-)
+(defn render-enemies [ctx state]
+  (render-rects ctx (:enemies state) "#FF0"))
 
-(defn bulletsRender [ctx state]
-  (doseq [bullet (:active (:bullets state))] 
-    (let [{:keys [x y w h]} bullet]
-      (drawSquare ctx x y w h "#000")
-    )
-  )
-)
+(defn render-bullets [ctx state]
+  (render-rects ctx (get-in state [:bullets :active]) "#000"))
 
-(defn playerRender [ctx state]
-  (let [player (:player state)]
-    (let [{:keys [x y w h]} player]
-      (drawSquare ctx x y w h "#F00")
-    )
-  )
-)
+(defn render-player [ctx state]
+  (render-rect ctx (:player state) "#F00"))
 
-(defn doLogic [state]
-  (bulletsLogic
-    (playerLogic
-      (enemiesLogic
-        (directionLogic state)
-      )
-    )
-  )
-)
+(defn update-state [state]
+  (update-bullets
+    (update-player
+      (update-enemies
+        (update-direction state)
+      ))))
 
-(defn renderScene [ctx state]
-  (enemiesRender ctx state)
-  (playerRender ctx state)
-  (bulletsRender ctx state)
-)
+(defn render-scene [ctx state]
+  (render-enemies ctx state)
+  (render-player ctx state)
+  (render-bullets ctx state))
 
 (defn tick [ctx state]
-  (clearScreen ctx) 
-  (renderScene ctx state)
+  (clear-screen ctx) 
+  (render-scene ctx state)
   (js/setTimeout (fn []
-    (tick ctx (doLogic state))
-  ) 33  )
-)
+    (tick ctx (update-state state))) 33))
 
 (defn ^:export init []
-  (hookInputEvents)
+  (hook-input-events)
   (let [ctx (context 640 480)] 
-    (tick ctx (initState)) 
-  )
-)
+    (tick ctx (create-state))))
 
-(defn hookInputEvents []
+(defn hook-input-events []
   (.addEventListener js/document "keydown" 
    (fn [e]
-    (setKeyState (. e -keyCode) true)
-     false
-   )
-  )
+    (set-key-state (. e -keyCode) true)
+     false))
   (.addEventListener js/document "keyup" 
    (fn [e]
-    (setKeyState (. e -keyCode) false)
-     false
-   )
-  )
-)
+    (set-key-state (. e -keyCode) false)
+     false)))
 
-(defn setKeyState [code, value]
-  (swap! keyStates assoc code value)
-)
+(defn set-key-state [code, value]
+  (swap! key-states assoc code value))
