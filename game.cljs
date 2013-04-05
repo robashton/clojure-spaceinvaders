@@ -121,8 +121,7 @@
   (update-bullets
     (update-player
       (update-enemies
-        (update-direction state)
-      ))))
+        (update-direction state)))))
 
 (defn render-scene [ctx state]
   (render-enemies ctx state)
