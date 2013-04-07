@@ -85,20 +85,15 @@
         (create-rect (:x player) (:y player) 5 5)
         (get-in state [:bullets :active])))))
 
+(defn rect-right [rect] (+ (:x rect) (:w rect)))
+(defn rect-bottom [rect] (+ (:y rect) (:h rect)))
+
 (defn collides-with [one two]
-  (let [one-left (:x one)
-        one-right (+ (:x one) (:w one))
-        one-top (:y one)
-        one-bottom (+ (:y one) (:h one))
-        two-left (:x two)
-        two-right (+ (:x two) (:w two))
-        two-top (:y two)
-        two-bottom (+ (:y two) (:h two))]
-    (cond (< one-right two-left) false
-          (> one-left two-right) false
-          (< one-bottom two-top) false
-          (> one-top two-bottom) false
-          :else true)))
+    (cond (< (rect-right one) (:x two)) false
+          (> (:x one) (rect-right two)) false
+          (< (rect-bottom one) (:y two)) false
+          (> (:y one) (rect-bottom two)) false
+          :else true))
 
 (defn collide-bullets [state]
   (assoc 

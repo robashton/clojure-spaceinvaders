@@ -13436,10 +13436,14 @@ game.add_bullet_in_player_location = function(a) {
   var b = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
   return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.cons.call(null, game.create_rect.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b), (new cljs.core.Keyword("\ufdd0:y")).call(null, b), 5, 5), cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0))))
 };
+game.rect_right = function(a) {
+  return(new cljs.core.Keyword("\ufdd0:x")).call(null, a) + (new cljs.core.Keyword("\ufdd0:w")).call(null, a)
+};
+game.rect_bottom = function(a) {
+  return(new cljs.core.Keyword("\ufdd0:y")).call(null, a) + (new cljs.core.Keyword("\ufdd0:h")).call(null, a)
+};
 game.collides_with = function(a, b) {
-  var c = (new cljs.core.Keyword("\ufdd0:x")).call(null, a), d = (new cljs.core.Keyword("\ufdd0:x")).call(null, a) + (new cljs.core.Keyword("\ufdd0:w")).call(null, a), e = (new cljs.core.Keyword("\ufdd0:y")).call(null, a), f = (new cljs.core.Keyword("\ufdd0:y")).call(null, a) + (new cljs.core.Keyword("\ufdd0:h")).call(null, a), g = (new cljs.core.Keyword("\ufdd0:x")).call(null, b), h = (new cljs.core.Keyword("\ufdd0:x")).call(null, b) + (new cljs.core.Keyword("\ufdd0:w")).call(null, b), k = (new cljs.core.Keyword("\ufdd0:y")).call(null, 
-  b), l = (new cljs.core.Keyword("\ufdd0:y")).call(null, b) + (new cljs.core.Keyword("\ufdd0:h")).call(null, b);
-  return d < g ? !1 : c > h ? !1 : f < k ? !1 : e > l ? !1 : !0
+  return game.rect_right.call(null, a) < (new cljs.core.Keyword("\ufdd0:x")).call(null, b) ? !1 : (new cljs.core.Keyword("\ufdd0:x")).call(null, a) > game.rect_right.call(null, b) ? !1 : game.rect_bottom.call(null, a) < (new cljs.core.Keyword("\ufdd0:y")).call(null, b) ? !1 : (new cljs.core.Keyword("\ufdd0:y")).call(null, a) > game.rect_bottom.call(null, b) ? !1 : !0
 };
 game.collide_bullets = function(a) {
   return cljs.core.assoc.call(null, cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.remove.call(null, function(b) {
