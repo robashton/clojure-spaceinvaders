@@ -13407,11 +13407,13 @@ game.enemies_reached_edge = function(a, b) {
     return c ? 600 < game.rects_max_x.call(null, a) : c
   }() ? !0 : function() {
     var c = cljs.core._EQ_.call(null, b, -1);
-    return c ? 0 < game.rects_min_x.call(null, a) : c
+    return c ? 0 > game.rects_min_x.call(null, a) : c
   }() ? !0 : !1
 };
 game.invert_enemies_direction = function(a) {
-  return cljs.core.assoc.call(null, a, "\ufdd0:direction", -1 * (new cljs.core.Keyword("\ufdd0:direction")).call(null, a))
+  return cljs.core.assoc.call(null, a, "\ufdd0:direction", -1 * (new cljs.core.Keyword("\ufdd0:direction")).call(null, a), "\ufdd0:enemies", cljs.core.map.call(null, function(a) {
+    return cljs.core.assoc.call(null, a, "\ufdd0:y", (new cljs.core.Keyword("\ufdd0:y")).call(null, a) + 50)
+  }, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a)))
 };
 game.update_direction = function(a) {
   return cljs.core.truth_(game.enemies_reached_edge.call(null, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a), (new cljs.core.Keyword("\ufdd0:direction")).call(null, a))) ? game.invert_enemies_direction.call(null, a) : a
@@ -13505,8 +13507,23 @@ game.render_bullets = function(a, b) {
 game.render_player = function(a, b) {
   return game.render_rect.call(null, a, (new cljs.core.Keyword("\ufdd0:player")).call(null, b), "#F00")
 };
+game.validate_end_conditions = function(a) {
+  return cljs.core.truth_(game.enemies_are_all_dead.call(null, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a))) ? game.start_next_level.call(null) : cljs.core.truth_(game.enemies_are_at_the_gate.call(null, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a))) ? game.show_game_over.call(null) : a
+};
+game.enemies_are_at_the_gate = function(a) {
+  return 400 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:y", a))
+};
+game.show_game_over = function() {
+  return document.location = "gameover.html"
+};
+game.enemies_are_all_dead = function(a) {
+  return cljs.core.not.call(null, cljs.core.first.call(null, a))
+};
+game.start_next_level = function() {
+  return game.create_state.call(null)
+};
 game.update_state = function(a) {
-  return game.update_bullets.call(null, game.update_player.call(null, game.update_enemies.call(null, game.update_direction.call(null, a))))
+  return game.validate_end_conditions.call(null, game.update_bullets.call(null, game.update_player.call(null, game.update_enemies.call(null, game.update_direction.call(null, a)))))
 };
 game.render_scene = function(a, b) {
   game.render_enemies.call(null, a, b);

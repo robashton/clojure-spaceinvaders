@@ -35,7 +35,6 @@
    :bullets () 
    :last-firing-ticks 0})
 
-
 (defn rects-max-x [rects]
   (apply max (map :x rects)))
 
@@ -44,11 +43,15 @@
 
 (defn enemies-reached-edge [enemies direction]
   (cond (and (= direction 1) (> (rects-max-x enemies) 600)) true
-        (and (= direction -1) (> (rects-min-x enemies) 0)) true
+        (and (= direction -1) (< (rects-min-x enemies) 0)) true
         :else false))
 
 (defn invert-enemies-direction [state]
-  (assoc state :direction (* (:direction state) -1)))
+  (assoc state 
+         :direction (* (:direction state) -1)
+         :enemies (map 
+                    (fn [enemy] (assoc enemy :y (+ (:y enemy) 50)))
+                      (:enemies state))))
 
 (defn update-direction [state]
   (if (enemies-reached-edge (:enemies state) (:direction state))
@@ -140,11 +143,30 @@
 (defn render-player [ctx state]
   (render-rect ctx (:player state) "#F00"))
 
+(defn validate-end-conditions [state]
+  (cond (enemies-are-all-dead (:enemies state)) (start-next-level)
+        (enemies-are-at-the-gate (:enemies state)) (show-game-over)
+        :else state))
+
+(defn enemies-are-at-the-gate [enemies]
+  (> (apply max (map :y enemies)) 400))
+
+(defn show-game-over []
+  (set! (. js/document -location) "gameover.html"))
+
+(defn enemies-are-all-dead [enemies]
+  (not (first enemies)))
+
+(defn start-next-level []
+  (create-state))
+
+
 (defn update-state [state]
-  (update-bullets
-    (update-player
-      (update-enemies
-        (update-direction state)))))
+  (validate-end-conditions
+    (update-bullets
+      (update-player
+        (update-enemies
+          (update-direction state))))))
 
 (defn render-scene [ctx state]
   (render-enemies ctx state)
