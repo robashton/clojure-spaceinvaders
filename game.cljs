@@ -23,11 +23,17 @@
    :w w
    :h h })
 
+(defn firing-rate [state] (min 15 (- 30 (* 2 (:level state)))))
+(defn enemy-speed [state] (:level state))
+(defn bullet-speed [state](:level state))
+(defn player-speed [state] (* 2 (:level state)))
+(defn enemy-descent-speed [state] 25)
 (defn rect-right [rect] (+ (:x rect) (:w rect)))
 (defn rect-bottom [rect] (+ (:y rect) (:h rect)))
 
-(defn create-state []
+(defn create-state [level]
  { :direction 1
+   :level level
    :enemies (for [x (range 0 480 60)
                   y (range 0 240 60)]
               (create-rect x y 20 20))
@@ -50,7 +56,7 @@
   (assoc state 
          :direction (* (:direction state) -1)
          :enemies (map 
-                    (fn [enemy] (assoc enemy :y (+ (:y enemy) 50)))
+                    (fn [enemy] (assoc enemy :y (+ (:y enemy) (enemy-descent-speed state))))
                       (:enemies state))))
 
 (defn update-direction [state]
@@ -60,7 +66,9 @@
 (defn update-enemies [state]
   (let [direction (:direction state)
         enemies (:enemies state)
-        func (if(= direction 1) inc dec)]
+        func (if(= direction 1) 
+               #(+ % (enemy-speed state)) 
+               #(- % (enemy-speed state)))]
     (assoc state :enemies
       (for [enemy enemies]
         (update-in enemy [:x] func)))))
@@ -68,7 +76,7 @@
 (defn update-firing-ticks [state]
   (if (= (:last-firing-ticks state) 0) 
     state
-    (if (= (rem (:last-firing-ticks state) 30) 0)
+    (if (= (rem (:last-firing-ticks state) (firing-rate state)) 0)
       (assoc state :last-firing-ticks 0)
       (update-in state [:last-firing-ticks] inc))))
 
@@ -81,7 +89,7 @@
 (defn move-bullets [state]
   (assoc-in state [:bullets]
     (for [bullet (:bullets state)]
-      (update-in bullet [:y] dec))))
+      (update-in bullet [:y] #(- % (bullet-speed state))))))
 
 (defn increment-firing-ticks [state]
   (assoc state :last-firing-ticks 1)
@@ -126,8 +134,8 @@
 (defn update-player [state]
   (let [left (@key-states 37)
         right (@key-states 39)]
-    (cond (= left true) (update-in state [:player :x] dec)
-          (= right true) (update-in state [:player :x] inc)
+    (cond (= left true) (update-in state [:player :x] #(- % (player-speed state)))
+          (= right true) (update-in state [:player :x] #(+ % (player-speed state)))
           :else state)))
 
 (defn render-rects [ctx rects colour]
@@ -144,7 +152,7 @@
   (render-rect ctx (:player state) "#F00"))
 
 (defn validate-end-conditions [state]
-  (cond (enemies-are-all-dead (:enemies state)) (start-next-level)
+  (cond (enemies-are-all-dead (:enemies state)) (start-next-level state)
         (enemies-are-at-the-gate (:enemies state)) (show-game-over)
         :else state))
 
@@ -157,9 +165,8 @@
 (defn enemies-are-all-dead [enemies]
   (not (first enemies)))
 
-(defn start-next-level []
-  (create-state))
-
+(defn start-next-level [state]
+  (create-state (inc (:level state))))
 
 (defn update-state [state]
   (validate-end-conditions
@@ -182,7 +189,7 @@
 (defn ^:export init []
   (hook-input-events)
   (let [ctx (context 640 480)] 
-    (tick ctx (create-state))))
+    (tick ctx (create-state 1))))
 
 (defn hook-input-events []
   (.addEventListener js/document "keydown" 
