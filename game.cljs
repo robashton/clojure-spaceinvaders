@@ -4,8 +4,7 @@
 
 (defn context [width height]
   (let [target (.getElementById js/document "target")]
-    [
-      (.getContext target "2d") 
+    [(.getContext target "2d") 
       (set! (. target -width) width)
       (set! (. target -height) height)]))
 
@@ -34,7 +33,7 @@
                   y (range 0 240 60)]
               (create-rect x y 20 20))
    :player (create-rect 200 430 20 20)
-   :bullets (create-bullets) } )
+   :bullets (create-bullets) })
 
 (defn update-direction [state]
   (let [{:keys [direction enemies]} state]
@@ -65,8 +64,8 @@
 (defn update-bullets [state]
   (try-and-fire
     (update-firing-ticks
-      (move-bullets state)
-    )))
+      (collide-bullets
+        (move-bullets state)))))
 
 (defn move-bullets [state]
   (let [bullets (:bullets state)
@@ -85,6 +84,33 @@
       (cons 
         (create-rect (:x player) (:y player) 5 5)
         (get-in state [:bullets :active])))))
+
+(defn collides-with [one two]
+  (let [one-left (:x one)
+        one-right (+ (:x one) (:w one))
+        one-top (:y one)
+        one-bottom (+ (:y one) (:h one))
+        two-left (:x two)
+        two-right (+ (:x two) (:w two))
+        two-top (:y two)
+        two-bottom (+ (:y two) (:h two))]
+    (cond (< one-right two-left) false
+          (> one-left two-right) false
+          (< one-bottom two-top) false
+          (> one-top two-bottom) false
+          :else true)))
+
+(defn collide-bullets [state]
+  (assoc 
+    (assoc-in state [:bullets :active]
+      (remove #(collides-with-any % (:enemies state)) (active-bullets state)))
+    :enemies
+      (remove #(collides-with-any % (active-bullets state)) (:enemies state))))
+
+(defn collides-with-any [one, others]
+  (some #(collides-with % one) others))
+
+(defn active-bullets [state] (get-in state [:bullets :active]))
 
 (defn fire [state]
   (increment-firing-ticks

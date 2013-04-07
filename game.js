@@ -13414,7 +13414,7 @@ game.update_firing_ticks = function(a) {
   return cljs.core._EQ_.call(null, b, 0) ? a : cljs.core._EQ_.call(null, cljs.core.rem.call(null, b, 30), 0) ? cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0), 0) : cljs.core.update_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0), cljs.core.inc)
 };
 game.update_bullets = function(a) {
-  return game.try_and_fire.call(null, game.update_firing_ticks.call(null, game.move_bullets.call(null, a)))
+  return game.try_and_fire.call(null, game.update_firing_ticks.call(null, game.collide_bullets.call(null, game.move_bullets.call(null, a))))
 };
 game.move_bullets = function(a) {
   var b = (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:active")).call(null, b);
@@ -13435,6 +13435,26 @@ game.increment_firing_ticks = function(a) {
 game.add_bullet_in_player_location = function(a) {
   var b = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
   return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.cons.call(null, game.create_rect.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b), (new cljs.core.Keyword("\ufdd0:y")).call(null, b), 5, 5), cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0))))
+};
+game.collides_with = function(a, b) {
+  var c = (new cljs.core.Keyword("\ufdd0:x")).call(null, a), d = (new cljs.core.Keyword("\ufdd0:x")).call(null, a) + (new cljs.core.Keyword("\ufdd0:w")).call(null, a), e = (new cljs.core.Keyword("\ufdd0:y")).call(null, a), f = (new cljs.core.Keyword("\ufdd0:y")).call(null, a) + (new cljs.core.Keyword("\ufdd0:h")).call(null, a), g = (new cljs.core.Keyword("\ufdd0:x")).call(null, b), h = (new cljs.core.Keyword("\ufdd0:x")).call(null, b) + (new cljs.core.Keyword("\ufdd0:w")).call(null, b), k = (new cljs.core.Keyword("\ufdd0:y")).call(null, 
+  b), l = (new cljs.core.Keyword("\ufdd0:y")).call(null, b) + (new cljs.core.Keyword("\ufdd0:h")).call(null, b);
+  return d < g ? !1 : c > h ? !1 : f < k ? !1 : e > l ? !1 : !0
+};
+game.collide_bullets = function(a) {
+  return cljs.core.assoc.call(null, cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.remove.call(null, function(b) {
+    return game.collides_with_any.call(null, b, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a))
+  }, game.active_bullets.call(null, a))), "\ufdd0:enemies", cljs.core.remove.call(null, function(b) {
+    return game.collides_with_any.call(null, b, game.active_bullets.call(null, a))
+  }, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a)))
+};
+game.collides_with_any = function(a, b) {
+  return cljs.core.some.call(null, function(b) {
+    return game.collides_with.call(null, b, a)
+  }, b)
+};
+game.active_bullets = function(a) {
+  return cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0))
 };
 game.fire = function(a) {
   return game.increment_firing_ticks.call(null, game.add_bullet_in_player_location.call(null, a))
