@@ -13395,9 +13395,26 @@ game.create_state = function() {
     }.call(null, cljs.core.range.call(null, 0, 480, 60))
   }(), "\ufdd0:player", game.create_rect.call(null, 200, 430, 20, 20), "\ufdd0:bullets", cljs.core.List.EMPTY, "\ufdd0:last-firing-ticks", 0], !0)
 };
+game.rects_max_x = function(a) {
+  return cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:x", a))
+};
+game.rects_min_x = function(a) {
+  return cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, "\ufdd0:x", a))
+};
+game.enemies_reached_edge = function(a, b) {
+  return function() {
+    var c = cljs.core._EQ_.call(null, b, 1);
+    return c ? 600 < game.rects_max_x.call(null, a) : c
+  }() ? !0 : function() {
+    var c = cljs.core._EQ_.call(null, b, -1);
+    return c ? 0 < game.rects_min_x.call(null, a) : c
+  }() ? !0 : !1
+};
+game.invert_enemies_direction = function(a) {
+  return cljs.core.assoc.call(null, a, "\ufdd0:direction", -1 * (new cljs.core.Keyword("\ufdd0:direction")).call(null, a))
+};
 game.update_direction = function(a) {
-  var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a, c = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null), b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null);
-  return cljs.core._EQ_.call(null, b, 1) ? 600 < cljs.core.apply.call(null, cljs.core.max, cljs.core.map.call(null, "\ufdd0:x", c)) ? cljs.core.assoc.call(null, a, "\ufdd0:direction", -1) : a : 0 > cljs.core.apply.call(null, cljs.core.min, cljs.core.map.call(null, "\ufdd0:x", c)) ? cljs.core.assoc.call(null, a, "\ufdd0:direction", 1) : a
+  return cljs.core.truth_(game.enemies_reached_edge.call(null, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a), (new cljs.core.Keyword("\ufdd0:direction")).call(null, a))) ? game.invert_enemies_direction.call(null, a) : a
 };
 game.update_enemies = function(a) {
   var b = (new cljs.core.Keyword("\ufdd0:direction")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a), d = cljs.core._EQ_.call(null, b, 1) ? cljs.core.inc : cljs.core.dec;

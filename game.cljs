@@ -35,19 +35,29 @@
    :bullets () 
    :last-firing-ticks 0})
 
+
+(defn rects-max-x [rects]
+  (apply max (map :x rects)))
+
+(defn rects-min-x [rects]
+  (apply min (map :x rects)))
+
+(defn enemies-reached-edge [enemies direction]
+  (cond (and (= direction 1) (> (rects-max-x enemies) 600)) true
+        (and (= direction -1) (> (rects-min-x enemies) 0)) true
+        :else false))
+
+(defn invert-enemies-direction [state]
+  (assoc state :direction (* (:direction state) -1)))
+
 (defn update-direction [state]
-  (let [{:keys [direction enemies]} state]
-    (if (= direction 1)
-      (let [right (apply max (map :x enemies))]
-        (if(> right 600) (assoc state :direction -1) state))
-      (let [left (apply min (map :x enemies))]
-        (if(< left 0) (assoc state :direction 1) state)))))
+  (if (enemies-reached-edge (:enemies state) (:direction state))
+    (invert-enemies-direction state) state))
 
 (defn update-enemies [state]
   (let [direction (:direction state)
         enemies (:enemies state)
-        func (if(= direction 1) inc dec)
-       ]
+        func (if(= direction 1) inc dec)]
     (assoc state :enemies
       (for [enemy enemies]
         (update-in enemy [:x] func)))))
@@ -83,11 +93,11 @@
 
 
 (defn collides-with [one two]
-    (cond (< (rect-right one) (:x two)) false
-          (> (:x one) (rect-right two)) false
-          (< (rect-bottom one) (:y two)) false
-          (> (:y one) (rect-bottom two)) false
-          :else true))
+  (cond (< (rect-right one) (:x two)) false
+        (> (:x one) (rect-right two)) false
+        (< (rect-bottom one) (:y two)) false
+        (> (:y one) (rect-bottom two)) false
+        :else true))
 
 (defn collide-bullets [state]
   (assoc 
