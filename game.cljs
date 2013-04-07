@@ -23,9 +23,8 @@
    :w w
    :h h })
 
-(defn create-bullets []
-  { :lastFiringTicks 0
-    :active () })
+(defn rect-right [rect] (+ (:x rect) (:w rect)))
+(defn rect-bottom [rect] (+ (:y rect) (:h rect)))
 
 (defn create-state []
  { :direction 1
@@ -33,7 +32,8 @@
                   y (range 0 240 60)]
               (create-rect x y 20 20))
    :player (create-rect 200 430 20 20)
-   :bullets (create-bullets) })
+   :bullets () 
+   :last-firing-ticks 0})
 
 (defn update-direction [state]
   (let [{:keys [direction enemies]} state]
@@ -53,13 +53,11 @@
         (update-in enemy [:x] func)))))
 
 (defn update-firing-ticks [state]
-  (let [bullets (:bullets state)
-        ticks (:lastFiringTicks bullets)]
-    (if (= ticks 0) 
-      state
-      (if (= (rem ticks 30) 0)
-        (assoc-in state [:bullets :lastFiringTicks] 0)
-        (update-in state [:bullets :lastFiringTicks] inc)))))
+  (if (= (:last-firing-ticks state) 0) 
+    state
+    (if (= (rem (:last-firing-ticks state) 30) 0)
+      (assoc state :last-firing-ticks 0)
+      (update-in state [:last-firing-ticks] inc))))
 
 (defn update-bullets [state]
   (try-and-fire
@@ -68,25 +66,21 @@
         (move-bullets state)))))
 
 (defn move-bullets [state]
-  (let [bullets (:bullets state)
-        active (:active bullets)]
-    (assoc-in state [:bullets :active]
-      (for [bullet active]
-        (update-in bullet [:y] dec)))))
+  (assoc-in state [:bullets]
+    (for [bullet (:bullets state)]
+      (update-in bullet [:y] dec))))
 
 (defn increment-firing-ticks [state]
-  (assoc-in state [:bullets :lastFiringTicks] 1)
+  (assoc state :last-firing-ticks 1)
 )
 
 (defn add-bullet-in-player-location [state]
   (let [player (:player state)]
-    (assoc-in state [:bullets :active]
+    (assoc-in state [:bullets]
       (cons 
         (create-rect (:x player) (:y player) 5 5)
-        (get-in state [:bullets :active])))))
+        (:bullets state)))))
 
-(defn rect-right [rect] (+ (:x rect) (:w rect)))
-(defn rect-bottom [rect] (+ (:y rect) (:h rect)))
 
 (defn collides-with [one two]
     (cond (< (rect-right one) (:x two)) false
@@ -97,22 +91,20 @@
 
 (defn collide-bullets [state]
   (assoc 
-    (assoc-in state [:bullets :active]
-      (remove #(collides-with-any % (:enemies state)) (active-bullets state)))
+    (assoc-in state [:bullets]
+      (remove #(collides-with-any % (:enemies state)) (:bullets state)))
     :enemies
-      (remove #(collides-with-any % (active-bullets state)) (:enemies state))))
+      (remove #(collides-with-any % (:bullets state)) (:enemies state))))
 
 (defn collides-with-any [one, others]
   (some #(collides-with % one) others))
-
-(defn active-bullets [state] (get-in state [:bullets :active]))
 
 (defn fire [state]
   (increment-firing-ticks
     (add-bullet-in-player-location state)))
 
 (defn can-fire [state]
-  (= (get-in state [:bullets :lastFiringTicks]) 0))
+  (= (:last-firing-ticks state) 0))
 
 (defn try-and-fire [state]
   (if (and (@key-states 32) (can-fire state))
@@ -133,7 +125,7 @@
   (render-rects ctx (:enemies state) "#FF0"))
 
 (defn render-bullets [ctx state]
-  (render-rects ctx (get-in state [:bullets :active]) "#000"))
+  (render-rects ctx (get-in state [:bullets]) "#000"))
 
 (defn render-player [ctx state]
   (render-rect ctx (:player state) "#F00"))

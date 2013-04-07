@@ -13358,8 +13358,11 @@ game.render_rect = function(a, b, c) {
 game.create_rect = function(a, b, c, d) {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:x", a, "\ufdd0:y", b, "\ufdd0:w", c, "\ufdd0:h", d], !0)
 };
-game.create_bullets = function() {
-  return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:lastFiringTicks", 0, "\ufdd0:active", cljs.core.List.EMPTY], !0)
+game.rect_right = function(a) {
+  return(new cljs.core.Keyword("\ufdd0:x")).call(null, a) + (new cljs.core.Keyword("\ufdd0:w")).call(null, a)
+};
+game.rect_bottom = function(a) {
+  return(new cljs.core.Keyword("\ufdd0:y")).call(null, a) + (new cljs.core.Keyword("\ufdd0:h")).call(null, a)
 };
 game.create_state = function() {
   return cljs.core.PersistentArrayMap.fromArray(["\ufdd0:direction", 1, "\ufdd0:enemies", function() {
@@ -13390,7 +13393,7 @@ game.create_state = function() {
         }
       }, null)
     }.call(null, cljs.core.range.call(null, 0, 480, 60))
-  }(), "\ufdd0:player", game.create_rect.call(null, 200, 430, 20, 20), "\ufdd0:bullets", game.create_bullets.call(null)], !0)
+  }(), "\ufdd0:player", game.create_rect.call(null, 200, 430, 20, 20), "\ufdd0:bullets", cljs.core.List.EMPTY, "\ufdd0:last-firing-ticks", 0], !0)
 };
 game.update_direction = function(a) {
   var b = cljs.core.seq_QMARK_.call(null, a) ? cljs.core.apply.call(null, cljs.core.hash_map, a) : a, c = cljs.core._lookup.call(null, b, "\ufdd0:enemies", null), b = cljs.core._lookup.call(null, b, "\ufdd0:direction", null);
@@ -13410,46 +13413,38 @@ game.update_enemies = function(a) {
   }())
 };
 game.update_firing_ticks = function(a) {
-  var b = (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a), b = (new cljs.core.Keyword("\ufdd0:lastFiringTicks")).call(null, b);
-  return cljs.core._EQ_.call(null, b, 0) ? a : cljs.core._EQ_.call(null, cljs.core.rem.call(null, b, 30), 0) ? cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0), 0) : cljs.core.update_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0), cljs.core.inc)
+  return cljs.core._EQ_.call(null, (new cljs.core.Keyword("\ufdd0:last-firing-ticks")).call(null, a), 0) ? a : cljs.core._EQ_.call(null, cljs.core.rem.call(null, (new cljs.core.Keyword("\ufdd0:last-firing-ticks")).call(null, a), 30), 0) ? cljs.core.assoc.call(null, a, "\ufdd0:last-firing-ticks", 0) : cljs.core.update_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:last-firing-ticks"], !0), cljs.core.inc)
 };
 game.update_bullets = function(a) {
   return game.try_and_fire.call(null, game.update_firing_ticks.call(null, game.collide_bullets.call(null, game.move_bullets.call(null, a))))
 };
 game.move_bullets = function(a) {
-  var b = (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a), c = (new cljs.core.Keyword("\ufdd0:active")).call(null, b);
-  return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), function() {
-    return function e(a) {
+  return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets"], !0), function() {
+    return function c(a) {
       return new cljs.core.LazySeq(null, !1, function() {
         for(;;) {
-          var b = cljs.core.seq.call(null, a);
-          return b ? (b = cljs.core.first.call(null, b), cljs.core.cons.call(null, cljs.core.update_in.call(null, b, cljs.core.PersistentVector.fromArray(["\ufdd0:y"], !0), cljs.core.dec), e.call(null, cljs.core.rest.call(null, a)))) : null
+          var e = cljs.core.seq.call(null, a);
+          return e ? (e = cljs.core.first.call(null, e), cljs.core.cons.call(null, cljs.core.update_in.call(null, e, cljs.core.PersistentVector.fromArray(["\ufdd0:y"], !0), cljs.core.dec), c.call(null, cljs.core.rest.call(null, a)))) : null
         }
       }, null)
-    }.call(null, c)
+    }.call(null, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a))
   }())
 };
 game.increment_firing_ticks = function(a) {
-  return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0), 1)
+  return cljs.core.assoc.call(null, a, "\ufdd0:last-firing-ticks", 1)
 };
 game.add_bullet_in_player_location = function(a) {
   var b = (new cljs.core.Keyword("\ufdd0:player")).call(null, a);
-  return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.cons.call(null, game.create_rect.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b), (new cljs.core.Keyword("\ufdd0:y")).call(null, b), 5, 5), cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0))))
-};
-game.rect_right = function(a) {
-  return(new cljs.core.Keyword("\ufdd0:x")).call(null, a) + (new cljs.core.Keyword("\ufdd0:w")).call(null, a)
-};
-game.rect_bottom = function(a) {
-  return(new cljs.core.Keyword("\ufdd0:y")).call(null, a) + (new cljs.core.Keyword("\ufdd0:h")).call(null, a)
+  return cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets"], !0), cljs.core.cons.call(null, game.create_rect.call(null, (new cljs.core.Keyword("\ufdd0:x")).call(null, b), (new cljs.core.Keyword("\ufdd0:y")).call(null, b), 5, 5), (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a)))
 };
 game.collides_with = function(a, b) {
   return game.rect_right.call(null, a) < (new cljs.core.Keyword("\ufdd0:x")).call(null, b) ? !1 : (new cljs.core.Keyword("\ufdd0:x")).call(null, a) > game.rect_right.call(null, b) ? !1 : game.rect_bottom.call(null, a) < (new cljs.core.Keyword("\ufdd0:y")).call(null, b) ? !1 : (new cljs.core.Keyword("\ufdd0:y")).call(null, a) > game.rect_bottom.call(null, b) ? !1 : !0
 };
 game.collide_bullets = function(a) {
-  return cljs.core.assoc.call(null, cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0), cljs.core.remove.call(null, function(b) {
+  return cljs.core.assoc.call(null, cljs.core.assoc_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets"], !0), cljs.core.remove.call(null, function(b) {
     return game.collides_with_any.call(null, b, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a))
-  }, game.active_bullets.call(null, a))), "\ufdd0:enemies", cljs.core.remove.call(null, function(b) {
-    return game.collides_with_any.call(null, b, game.active_bullets.call(null, a))
+  }, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a))), "\ufdd0:enemies", cljs.core.remove.call(null, function(b) {
+    return game.collides_with_any.call(null, b, (new cljs.core.Keyword("\ufdd0:bullets")).call(null, a))
   }, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, a)))
 };
 game.collides_with_any = function(a, b) {
@@ -13457,14 +13452,11 @@ game.collides_with_any = function(a, b) {
     return game.collides_with.call(null, b, a)
   }, b)
 };
-game.active_bullets = function(a) {
-  return cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0))
-};
 game.fire = function(a) {
   return game.increment_firing_ticks.call(null, game.add_bullet_in_player_location.call(null, a))
 };
 game.can_fire = function(a) {
-  return cljs.core._EQ_.call(null, cljs.core.get_in.call(null, a, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:lastFiringTicks"], !0)), 0)
+  return cljs.core._EQ_.call(null, (new cljs.core.Keyword("\ufdd0:last-firing-ticks")).call(null, a), 0)
 };
 game.try_and_fire = function(a) {
   return cljs.core.truth_(function() {
@@ -13491,7 +13483,7 @@ game.render_enemies = function(a, b) {
   return game.render_rects.call(null, a, (new cljs.core.Keyword("\ufdd0:enemies")).call(null, b), "#FF0")
 };
 game.render_bullets = function(a, b) {
-  return game.render_rects.call(null, a, cljs.core.get_in.call(null, b, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets", "\ufdd0:active"], !0)), "#000")
+  return game.render_rects.call(null, a, cljs.core.get_in.call(null, b, cljs.core.PersistentVector.fromArray(["\ufdd0:bullets"], !0)), "#000")
 };
 game.render_player = function(a, b) {
   return game.render_rect.call(null, a, (new cljs.core.Keyword("\ufdd0:player")).call(null, b), "#F00")
